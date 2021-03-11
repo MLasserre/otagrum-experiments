@@ -453,7 +453,7 @@ class Pipeline:
         suffix = ''.join(['f', str(self.begin_size), 't', str(self.end_size),
                           'np', str(self.n_points), 'r', str(self.n_restart)])
         times_dir = os.path.join(times_dir, '_'.join([parameters, suffix]))
-        print(times_dir)
+        # print(times_dir)
         
         
         result_files = os.listdir(times_dir)
