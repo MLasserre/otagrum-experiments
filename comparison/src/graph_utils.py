@@ -194,7 +194,7 @@ def write_graph(graph, file_name="output.dot"):
         fo.write(graph.toDot())
 
 def read_graph(file_name):
-    print("Loading file {}".format(file_name))
+    # print("Loading file {}".format(file_name))
     dot_graph = dot.graph_from_dot_file(file_name)
     isUndiGraph = False
 
