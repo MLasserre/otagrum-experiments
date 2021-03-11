@@ -13,7 +13,6 @@ import otagrum as otagr
 import numpy as np
 import os
 from pathlib import Path
-import elidan.hill_climbing as hc
 import data_generation as dg
 import utils as ut
 import graph_utils as gu
@@ -21,34 +20,6 @@ import plotting
 import time
 
 
-class DataGenerator:
-    def __init__(self, distribution, structure):
-        self.__distribution = distribution
-        self.__structure = structure
-        
-    def generate_data(self):
-        Path(self.data_dir).mkdir(parents=True, exist_ok=True)
-        
-        # If not the good length remove all
-        ldir = os.listdir(self.data_dir)
-        for l in ldir:
-            with open(os.path.join(self.data_dir, l), 'r') as f:
-                if len(f.read().split('\n')) < (self.data_size + 2):
-                    os.remove(os.path.join(self.data_dir, l))
-                    
-        n_existing_sample = len(os.listdir(self.data_dir))
-        
-        Tstruct = self.load_struct()
-        ndag = otagr.NamedDAG(Tstruct)
-        
-        for i in range(n_existing_sample, self.data_number):
-            sample = dg.generate_data(ndag,
-                                      self.data_size,
-                                      self.data_distribution,
-                                      **self.data_parameters)
-            data_file_name = "sample" + str(i+1).zfill(2)
-            sample.exportToCSVFile(os.path.join(self.data_dir, data_file_name) + ".csv", ',')
-    
 class Pipeline:
     def __init__(self, method, **parameters):
         # Default location
@@ -89,11 +60,10 @@ class Pipeline:
         
     def __repr__(self):
         method = "Method : {}".format(self.method)
-        parameters = "Parameters : {}, {}".format(self.parameters[0], self.parameters[1])
-        
+        parameters = "Parameters : {}, {}".format(self.parameters[0],
+                                                  self.parameters[1])
         distribution = "Data distribution : {}".format(self.data_distribution)
         structure = "Data structure : {}".format(self.data_structure)
-    
         return '\n'.join([method, parameters, distribution, structure])
     
     # Magouille
@@ -175,9 +145,6 @@ class Pipeline:
         self.result_domain_str = ''.join(['f', str(self.begin_size), 't', str(self.end_size),
                                           'np', str(self.n_points), 'r', str(self.n_restart)])
     
-    # def getSizeInfos(self):
-    #     return self.begin_size, self.end_size, self.n_points
-    
     def generate_data(self):
         Path(self.data_dir).mkdir(parents=True, exist_ok=True)
         
@@ -232,9 +199,6 @@ class Pipeline:
             self.parameters = parameters
             
     def load_struct(self):
-        # with open(self.structure_dir + self.data_structure, 'r') as file:
-            # arcs = file.read().replace('\n', '')
-        # return gu.fastNamedDAG(arcs)
         dag, names = gu.read_graph(self.structure_dir + self.data_structure + '.dot')
         return otagr.NamedDAG(dag, names)
     
