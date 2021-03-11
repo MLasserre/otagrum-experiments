@@ -7,7 +7,6 @@ import numpy as np
 import pyAgrum as gum
 import os
 import os.path as path
-import elidan.hill_climbing as hc
 import graph_utils as gu
 
 
@@ -53,49 +52,6 @@ def structural_score(true_structure, list_structures, score):
         
         result.append(list_result)
     return result
-
-def learning(sample, method, parameters):
-    if method == "cpc":
-        binNumber, alpha = parameters
-        learner = otagr.ContinuousPC(sample, binNumber, alpha)
-        
-        ndag = learner.learnDAG()
-        
-        TTest = otagr.ContinuousTTest(sample, alpha)
-        jointDistributions = []        
-        for i in range(ndag.getSize()):
-            d = 1+ndag.getParents(i).getSize()
-            if d == 1:
-                bernsteinCopula = ot.Uniform(0.0, 1.0)
-            else:
-                K = TTest.GetK(len(sample), d)
-                indices = [int(n) for n in ndag.getParents(i)]
-                indices = [i] + indices
-                bernsteinCopula = ot.EmpiricalBernsteinCopula(sample.getMarginal(indices), K, False)
-            jointDistributions.append(bernsteinCopula)
-        
-        bn = gu.named_dag_to_bn(ndag)
-    
-    elif method == "elidan":
-        #print(sample.getDescription())
-        max_parents, n_restart_hc = parameters
-        copula, dag = hc.hill_climbing(sample, max_parents, n_restart_hc)[0:2]
-        #bn = dag_to_bn(dag, Tstruct.names())
-        bn = gu.dag_to_bn(dag, sample.getDescription())
-        
-    elif method == "cmiic":
-        cmode, kmode = parameters
-        print(cmode,kmode)
-        learner = cmiic.ContinuousMIIC(sample, cmode, kmode)
-        learner.learnMixedStructure()
-        dag = learner.learnStructure()
-        print(dag)
-        bn = gu.dag_to_bn(dag, sample.getDescription())
-        print(bn)
-    else:
-        print("Wrong entry for method argument !")
-    
-    return bn
 
 def struct_from_multiple_dataset(directory, method, parameters,
                                  start=10, end=1e4, num=10, restart=1):
