@@ -3,6 +3,7 @@ import openturns.viewer as otv
 import pyAgrum as gum
 import otagrum as otagr
 
+import numpy as np
 from pathlib import Path
 
 def write_graph(graph, file_name="output.dot"):
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 
     # Loading data
     data_ref = ot.Sample.ImportFromTextFile(file_name, ";")
-    # data_ref = data_ref[:200]
+    data_ref = data_ref[:200]
     size = data_ref.getSize()     # Size of data
     dim = data_ref.getDimension() # Dimension of data
 
@@ -78,6 +79,7 @@ if __name__ == "__main__":
 
     f = figure_path.joinpath("pairs_KSPC.pdf")
     pairs(cbn.getSample(size_draw), f)
-    # sample = cbn.getSample(1000)
 
-
+    # marginal = cbn.getMarginal([1, 2])
+    # conditional = [[r.computeConditionalPDF(x, [y]) for x in np.linspace(-10, 10, 100)] for y in np.linspace(-10, 10, 100)]
+    # print(conditional)
