@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
     # Loading data
     data_ref = ot.Sample.ImportFromTextFile(file_name, ";")
-    data_ref = data_ref[:200]
     size = data_ref.getSize()     # Size of data
     dim = data_ref.getDimension() # Dimension of data
 
