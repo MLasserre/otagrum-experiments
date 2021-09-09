@@ -1,17 +1,17 @@
 digraph {
-    "sulphates"->"quality"
-    "quality"->"volatile acidity"
-    "quality"->"alcohol"
-    "free sulfur dioxide"->"total sulfur dioxide"
-    "total sulfur dioxide"->"alcohol"
-    "alcohol"->"density"
-    "chlorides"->"density"
-    "residual sugar"->"density"
-    "fixed acidity"->"pH"
-    "fixed acidity"->"density"
-    "fixed acidity"->"citric acid"
-    "citric acid"->"volatile acidity"
-    "volatile acidity"
-    "density"
-    "pH"
+    sulphates->quality
+    quality->volatile acidity
+    quality->alcohol
+    free sulfur dioxide->total sulfur dioxide
+    total sulfur dioxide->alcohol
+    alcohol->density
+    chlorides->density
+    residual sugar->density
+    fixed acidity->pH
+    fixed acidity->density
+    fixed acidity->citric acid
+    citric acid->volatile acidity
+    volatile acidity
+    density
+    pH
 }
