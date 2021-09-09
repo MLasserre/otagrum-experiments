@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 import graphviz
+import pydotplus
 import matplotlib.pyplot as plt
 
 
@@ -18,7 +19,7 @@ import matplotlib.pyplot as plt
 def write_graph(graph, file_name="output.dot"):
     ''' Util function to write the graph into a DOT file'''
     with open(file_name, 'w') as fo:
-        fo.write(graph.toDot())
+        fo.write(dot_quote_adder(graph.toDot()))
 
 
 def dot_quote_adder(dot_string):
@@ -69,6 +70,9 @@ data_path = location.joinpath("data/")
 result_path = location.joinpath("results/")
 result_path.mkdir(parents=True, exist_ok=True)
 
+structure_path = result_path.joinpath("structures/")
+structure_path.mkdir(parents=True, exist_ok=True)
+
 figure_path = location.joinpath("figures/")
 figure_path.mkdir(parents=True, exist_ok=True)
 
@@ -104,7 +108,7 @@ pairs(data_draw, f)
 # CBIC Algorithm
 learner = otagr.TabuList(data_ref, 2, 10, 2) # Using CPC algorithm
 cbic_dag = learner.learnDAG() # Learning DAG
-graphviz.Source(dot_quote_adder(cbic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cbic_dag.dot"))
 
 
 # CPC Algorithm
@@ -112,6 +116,7 @@ learner = otagr.ContinuousPC(data_ref, 4, 0.05) # Using CPC algorithm
 cpc_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
 graphviz.Source(dot_quote_adder(cpc_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cpc_dag.dot"))
 
 
 # CMIIC ALGORITHM
@@ -121,47 +126,47 @@ learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.01)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_1.dot"))
 
 # Alpha = 0.02
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.02)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_2.dot"))
 
 # Alpha = 0.03
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.03)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_3.dot"))
 
 # Alpha = 0.04
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.04)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_4.dot"))
 
 # Alpha = 0.05
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.05)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_5.dot"))
 
 # Alpha = 0.06
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.06)
 cmiic_dag = learner.learnDAG() # Learning DAG
 #write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cmiic_dag.toDot()))
+write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_6.dot"))
 
-
-#################LEARNING PARAMETERS########################
 
 '''
+#################LEARNING PARAMETERS########################
+
 #REF DATA
 pairs(data_draw, f)
 
