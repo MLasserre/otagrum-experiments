@@ -38,6 +38,9 @@ def dot_quote_adder(dot_string):
 
     arcs = ['\"' + a[0] + '\"->\"' + a[1] + '\"' for a in arcs]
     new_dot_string += header + '\n'
+    new_dot_string += "    node [style=filled, fillcolor=\"#E9E9E9\", penwidth=1.875, "
+    new_dot_string += "fontsize=14, fontname=\"times-bold\"]" + '\n'
+    new_dot_string += "    edge [penwidth=1.5]" + '\n'
     for a in arcs:
         new_dot_string += '    ' + a + '\n'
     new_dot_string += tailer
@@ -114,9 +117,7 @@ write_graph(cbic_dag, structure_path.joinpath("cbic_dag.dot"))
 # CPC Algorithm
 learner = otagr.ContinuousPC(data_ref, 4, 0.05) # Using CPC algorithm
 cpc_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-graphviz.Source(dot_quote_adder(cpc_dag.toDot()))
-write_graph(cbic_dag, structure_path.joinpath("cpc_dag.dot"))
+write_graph(cpc_dag, structure_path.joinpath("cpc_dag.dot"))
 
 
 # CMIIC ALGORITHM
@@ -125,43 +126,37 @@ write_graph(cbic_dag, structure_path.joinpath("cpc_dag.dot"))
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.01)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_1.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_1.dot"))
 
 # Alpha = 0.02
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.02)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_2.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_2.dot"))
 
 # Alpha = 0.03
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.03)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_3.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_3.dot"))
 
 # Alpha = 0.04
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.04)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_4.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_4.dot"))
 
 # Alpha = 0.05
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.05)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_5.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_5.dot"))
 
 # Alpha = 0.06
 learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
 learner.setAlpha(0.06)
 cmiic_dag = learner.learnDAG() # Learning DAG
-#write_graph(dag, result_path.joinpath("dag.dot"))
-write_graph(cbic_dag, structure_path.joinpath("cmiic_dag_6.dot"))
+write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_6.dot"))
 
 
 '''
