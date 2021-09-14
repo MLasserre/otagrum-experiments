@@ -122,42 +122,37 @@ write_graph(cpc_dag, structure_path.joinpath("cpc_dag.dot"))
 
 # CMIIC ALGORITHM
 
-# Alpha = 0.01
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.01)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_1.dot"))
+alphas = np.arange(10, 501, 5)/1000
+fig, ax = plt.subplots()
 
-# Alpha = 0.02
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.02)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_2.dot"))
+x_major_ticks = np.arange(0, 0.5, 0.05)
+x_minor_ticks = np.arange(0, 0.5, 0.01)
 
-# Alpha = 0.03
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.03)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_3.dot"))
+y_major_ticks = np.arange(0, 25, 5)
+y_minor_ticks = np.arange(0, 25, 1)
 
-# Alpha = 0.04
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.04)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_4.dot"))
+ax.set_xticks(x_major_ticks)
+ax.set_xticks(x_minor_ticks, minor=True)
+ax.set_yticks(y_major_ticks)
+ax.set_yticks(y_minor_ticks, minor=True)
 
-# Alpha = 0.05
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.05)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_5.dot"))
+ax.set_xlim(0, 0.5)
+ax.set_ylim(0, 25)
 
-# Alpha = 0.06
-learner = otagr.ContinuousMIIC(data_ref) # Using CPC algorithm
-learner.setAlpha(0.06)
-cmiic_dag = learner.learnDAG() # Learning DAG
-write_graph(cmiic_dag, structure_path.joinpath("cmiic_dag_6.dot"))
+n_arcs = []
+for alpha in alphas:
+    print("Processing alpha={}".format(alpha))
+    learner = otagr.ContinuousMIIC(data_ref) # Using CMIIC algorithm
+    learner.setAlpha(alpha)
+    cmiic_dag = learner.learnDAG() # Learning DAG
+    n_arcs.append(cmiic_dag.getDAG().sizeArcs())
+    write_graph(cmiic_dag,
+                structure_path.joinpath("cmiic_dag_"+str(alpha).replace('.','')+'.dot'))
 
+plt.plot(alphas, n_arcs)
+# ax.legend()
+plt.savefig(figure_path.joinpath("alpha_curve.pdf"), transparent=True)
+print("Saving figure in {}".format(figure_path.joinpath("alpha_curve.pdf")))
 
 '''
 #################LEARNING PARAMETERS########################
