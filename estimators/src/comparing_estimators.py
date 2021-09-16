@@ -64,11 +64,8 @@ def compute_results(sizes, restarts, distribution):
 
         info_results[size] = np.array(infos)
         hdist_results[size] = np.array(hdists)
-        
-        save_dict(info_results, Path('results')/'info'/str(restarts))
-        save_dict(hdist_results, Path('results')/'hdist'/str(restarts))
 
-    return info_results
+    return info_results, hdist_results
 
 def apply_to_dic(dictionary, method):
     new = {}
@@ -81,6 +78,7 @@ def apply_to_dic(dictionary, method):
 RandomGenerator.SetSeed(0)
 size_min, size_max = 1000, 10001
 sizes = np.arange(size_min, size_max, 1000)
+print(sizes)
 restarts = 5000
 
 res_dir = Path('../results')
@@ -96,7 +94,9 @@ distribution = ComposedDistribution([Uniform(0., 1.)]*2)
 print("Checking existing results")
 if not info_dir.exists() or not hdist_dir.exists():
     print("Found no results, computing them...")
-    info_results = compute_results(sizes, restarts, distribution)
+    info_results, hdist_results = compute_results(sizes, restarts, distribution)
+    save_dict(info_results, res_dir/'info'/str(restarts))
+    save_dict(hdist_results, res_dir/'hdist'/str(restarts))
 else:
     # Find which size files have been generated
     found_info_sizes = [int(f.stem) for f in info_dir.iterdir()]
@@ -109,7 +109,9 @@ else:
     if remaining_sizes:
         print("Computing missing results...")
         remaining_sizes.sort()
-        compute_results(remaining_sizes, restarts, distribution)
+        info_results, hdist_results = compute_results(remaining_sizes, restarts, distribution)
+        save_dict(info_results, res_dir/'info'/str(restarts))
+        save_dict(hdist_results, res_dir/'hdist'/str(restarts))
 
     # Load the results into dictionaries
     print("Loading data...")
