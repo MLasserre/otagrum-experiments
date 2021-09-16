@@ -40,6 +40,7 @@ def compute_results(sizes, restarts, distribution):
     info_results = {}
     hdist_results = {}
     for size in sizes:
+        print(size)
         size = int(size)
 
         infos = []
