@@ -7,7 +7,6 @@ mpl.rc('font', family='serif')
 
 import pandas as pd
 import pyAgrum as gum
-import pyAgrum.lib.notebook as gnb
 import openturns as ot
 import otagrum as otagr
 import numpy as np
