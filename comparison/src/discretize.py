@@ -1,10 +1,16 @@
 # Script that discretize data in order to compare with otagrum
 
 import pyAgrum as gum
+import openturns as ot
+import otagrum as otagr
 import pyAgrum.skbn as skbn
-import sklearn.preprocessing as pp
 
 import numpy as np
+# import pandas as pd
+import tempfile as tf
+import time
+import os
+
 from pathlib import Path
 
 def write_graph(graph, file_name="output.dot"):
@@ -12,36 +18,44 @@ def write_graph(graph, file_name="output.dot"):
     with open(file_name, 'w') as fo:
         fo.write(graph.toDot())
 
-if __name__ == "__main__":
+def learnDAG(sample, dis_method='quantile', nbins=5, threshold=25):
+    # data = pd.read_csv(file_name, nrows=size)
 
-    # Defining directories to put results and figures
-    # result_path = Path("./results/")
-    # result_path.mkdir(parents=True, exist_ok=True)
+    names = list(sample.getDescription())
 
-    # figure_path = Path("./figures/")
-    # figure_path.mkdir(parents=True, exist_ok=True)
+    csvfile = tf.NamedTemporaryFile(delete=False)
+    csvfilename = csvfile.name + '.csv'
+    csvfile.close()
 
-    # Data file name
-    file_name = '../data/samples/gaussian/alarm/r08/sample01.csv'
-    clf = skbn.BNClassifier(learningMethod='MIIC', discretizationStrategy='quantile',
-                            discretizationNbBins=5, discretizationThreshold=25)
+    sample.exportToCSVFile(csvfilename, ',')
 
-    clf.fit(filename=file_name, targetName="PAP")
-    bn = clf.bn
-    write_graph(bn)
-    # dsc = pp.KBinsDiscretizer(11, strategy='kmeans')
+    start = time.time()
+    discretizer = skbn.BNDiscretizer(defaultDiscretizationMethod=dis_method,
+                                    defaultNumberOfBins=nbins,
+                                    discretizationThreshold=threshold)
 
-    # Loading data
-    # print("Processing reference data")
-    # f = figure_path.joinpath("pairs_ref.pdf")
-    # pairs(data_draw, f)
+    variables = [discretizer.createVariable(name, sample.getMarginal([name])) for name in names]
 
-    # learner = gum.BNLearner(file_name)
-    # learne.usePC()
-    # bn = learner.learnBN()
-    # print("Constructing CBN model")
+    bn = gum.BayesNet()
+    for variable in variables:
+        bn.add(variable)
 
-    # sample_draw = cbn.getSample(size_draw)  # Sampling data from CBN model
+    learner = gum.BNLearner(csvfilename, bn)
+    learner.useMIIC()
+    learner.useNMLCorrection()
 
-    # f = figure_path.joinpath("pairs_KSPC.pdf")
-    # pairs(cbn.getSample(size_draw), f)
+    dag = learner.learnDAG()
+    ndag = otagr.NamedDAG(dag, names)
+
+    end = time.time()
+
+    os.remove(csvfilename)
+
+    return ndag, start, end
+
+if __name__ == '__main__':
+    data = ot.Sample.ImportFromTextFile('../data/samples/gaussian/alarm/r08/sample01.csv', ',')
+    data = (data.rank()+1)/(data.getSize()+2)
+    sample = data[0:1000]
+    dag, s, e = learnDAG(sample)
+    write_graph(dag)
