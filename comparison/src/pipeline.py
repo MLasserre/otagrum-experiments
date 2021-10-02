@@ -60,8 +60,7 @@ class Pipeline:
         
     def __repr__(self):
         method = "Method : {}".format(self.method)
-        parameters = "Parameters : {}, {}".format(self.parameters[0],
-                                                  self.parameters[1])
+        parameters = "Parameters : {}".format(self.parameters)
         distribution = "Data distribution : {}".format(self.data_distribution)
         structure = "Data structure : {}".format(self.data_structure)
         return '\n'.join([method, parameters, distribution, structure])
@@ -370,7 +369,7 @@ class Pipeline:
 
         elif self.method == "dmiic":
             # learner.setBeta(self.kbeta)
-            ndag, start, end = dsc.learnDAG(sample)
+            ndag, start, end = dsc.learnDAG(sample, **self.parameters)
             # bn = gu.named_dag_to_bn(ndag)
 
         elif self.method == "lgbn":
