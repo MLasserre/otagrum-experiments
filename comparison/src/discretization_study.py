@@ -62,10 +62,13 @@ ylim = {'alarm':80}
 
 correlations = np.round(np.linspace(0.8, 0.8, 1), decimals=1)
 
-bin_range = np.arange(5, 21, 5, dtype=int)
+# bin_range = np.concatenate((np.arange(3, 5, 1, dtype=int),
+                            # np.arange(5, 21, 5, dtype=int)))
+bin_range = np.arange(3,5,1,dtype=int)
+print(bin_range)
 pls = {}
 for b in bin_range:
-    pls[b] = Pipeline('dmiic', dis_method='quantile', nbins=b, threshold=25)
+    pls[b] = Pipeline('dmiic', dis_method='kmeans', nbins=b, threshold=25)
 
 plot_style = {'linewidth':2.}
 
@@ -105,8 +108,16 @@ for structure in structures:
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels, loc='lower right')
+                print("Saving figure in {}".format(os.path.join(apath,
+                                                            '_'.join(['fscore',
+                                                                      distribution,
+                                                                      structure,]) + '_discretization_study.pdf')))
+                print("Saving figure in {}".format(os.path.join(apath,
+                                                            '_'.join(['fscore',
+                                                                distribution,
+                                                                structure]) + '_discretization_study.pdf')))
                 plt.savefig(os.path.join(apath,
-                                         '_'.join(['fscore', distribution , structure]) +'discretization_study.pdf'),
+                                         '_'.join(['fscore', distribution , structure]) +'_discretization_study.pdf'),
                             transparent=True)
                 
                 
@@ -120,8 +131,12 @@ for structure in structures:
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels, loc='upper right')
+                print("Saving figure in {}".format(os.path.join(apath,
+                                                            '_'.join(['hamming',
+                                                                      distribution,
+                                                                      structure,]) + '_discretization_study.pdf')))
                 plt.savefig(os.path.join(apath,
-                                         '_'.join(['hamming', distribution , structure]) +'.pdf'),
+                                         '_'.join(['hamming', distribution , structure]) +'_discretization_study.pdf'),
                         transparent=True)
 
                 fig, ax = plt.subplots()
@@ -134,8 +149,12 @@ for structure in structures:
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels)
+                print("Saving figure in {}".format(os.path.join(apath,
+                                                            '_'.join(['time_complexity',
+                                                                      distribution,
+                                                                      structure,]) + '_discretization_study.pdf')))
                 plt.savefig(os.path.join(apath,
-                                         '_'.join(['time_complexity', distribution , structure]) +'.pdf'),
+                                         '_'.join(['time_complexity', distribution , structure]) +'_discretization_study.pdf'),
                         transparent=True)
                 
                 
@@ -160,8 +179,12 @@ for structure in structures:
             handles, labels = ax.get_legend_handles_labels()
             handles = [h[0] for h in handles]
             ax.legend(handles, labels, loc='lower right')
+            print("Saving figure in {}".format(os.path.join(bpath,
+                                                            '_'.join(['fscore',
+                                                                      distribution,
+                                                                      structure,]) + '_discretization_study.pdf')))
             plt.savefig(os.path.join(bpath,
-                                     '_'.join(['fscore', distribution , structure]) +'.pdf'),
+                                     '_'.join(['fscore', distribution , structure]) +'_discretization_study.pdf'),
                         transparent=True)
             
             
@@ -178,9 +201,9 @@ for structure in structures:
             print("Saving figure in {}".format(os.path.join(bpath,
                                                             '_'.join(['hamming',
                                                                       distribution,
-                                                                      structure,]) + '.pdf')))
+                                                                      structure,]) + '_discretization_study.pdf')))
             plt.savefig(os.path.join(bpath,
-                                     '_'.join(['hamming', distribution , structure]) +'.pdf'),
+                                     '_'.join(['hamming', distribution , structure]) +'_discretization_study.pdf'),
                         transparent=True)
 
             fig, ax = plt.subplots()
@@ -194,6 +217,10 @@ for structure in structures:
             handles, labels = ax.get_legend_handles_labels()
             handles = [h[0] for h in handles]
             ax.legend(handles, labels)
+            print("Saving figure in {}".format(os.path.join(bpath,
+                                                            '_'.join(['time_complexity',
+                                                                      distribution,
+                                                                      structure,]) + '_discretization_study.pdf')))
             plt.savefig(os.path.join(bpath,
-                                     '_'.join(['time_complexity', distribution , structure]) +'.pdf'),
+                                     '_'.join(['time_complexity', distribution , structure]) +'_discretization_study.pdf'),
                         transparent=True)
