@@ -8,7 +8,7 @@ import time
 
 from graph_utils import read_graph
 
-def learn_lgbn(sample, restart=20, maxp=5):
+def learnDAG(sample, maxp=5, restart=20):
 
     names = list(sample.getDescription())
     
