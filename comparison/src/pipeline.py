@@ -13,6 +13,7 @@ import numpy as np
 import os
 from pathlib import Path
 import discretize as dsc
+import lgbn
 import data_generation as dg
 import utils as ut
 import graph_utils as gu
@@ -231,9 +232,9 @@ class Pipeline:
             result_name += '_' + str(self.parameters['dis_method']) + '_' + \
                            str(self.parameters['nbins']) + '_' + \
                            str(self.parameters['threshold']) + '_'
-        elif self.method == "lgbn":
-            result_name += '_' + str(self.parameters['max_parents']) + '_' + \
-                           str(self.parameters['hc_restart']) + '_'
+        elif self.method == "gbn":
+            result_name += '_' + str(self.parameters['maxp']) + '_' + \
+                           str(self.parameters['restart']) + '_'
         else:
             print("Wrong entry for method argument")
 
@@ -368,13 +369,10 @@ class Pipeline:
             # bn = gu.named_dag_to_bn(ndag)
 
         elif self.method == "dmiic":
-            # learner.setBeta(self.kbeta)
             ndag, start, end = dsc.learnDAG(sample, **self.parameters)
-            # bn = gu.named_dag_to_bn(ndag)
 
-        elif self.method == "lgbn":
-            start = time.time()
-            end = time.time()
+        elif self.method == "gbn":
+            ndag, start, end = lgbn.learnDAG(sample, **self.parameters)
             
         else:
             print("Wrong entry for method argument !")
