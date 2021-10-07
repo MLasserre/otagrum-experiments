@@ -209,10 +209,10 @@ class Pipeline:
         data = ot.Sample.ImportFromTextFile(path, ',')
         return (data.rank()+1)/(data.getSize()+2)
     
-    def structuralScoreExists(self, score):
+    def metricExists(self, metric):
         parameters = 'f' + str(self.begin_size) + 't' + str(self.end_size) + \
                      'np' + str(self.n_points) + 'r' + str(self.n_restart)
-        result_name = '_'.join([score, self.method])
+        result_name = '_'.join([metric, self.method])
         
         if self.method == "cpc":
             result_name += '_' + str(self.parameters['binNumber']) + '_' + \
@@ -241,14 +241,14 @@ class Pipeline:
         result_name = result_name + parameters
         
         return os.path.exists(os.path.join(self.result_dir,
-                                           'scores',
+                                           'processed',
                                            result_name + '.csv'))
         
     
     def loadLearnedStructures(self):
         sizes = np.linspace(self.begin_size, self.end_size, self.n_points, dtype=int)
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
-        path = os.path.join(self.result_dir, 'structures',
+        path = os.path.join(self.result_dir, 'raw/structures',
                             self.method, parameters + '_' + self.result_domain_str)
         list_structures = []
         for i in range(self.n_restart):
@@ -265,11 +265,28 @@ class Pipeline:
             list_structures.append(list_by_size)
             
         return np.reshape(list_structures, (self.n_restart, self.n_points)).transpose()
-    
+
+    def loadLearningTimes(self):
+        size = self.end_size
+        parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
+        times_dir = os.path.join(self.result_dir, 'raw/times',
+                                 self.method, parameters + '_' + self.result_domain_str)
+
+        result_files = os.listdir(times_dir)
+        results = []
+        for rf in result_files:
+            results.append(pd.read_csv(os.path.join(times_dir, rf),
+                           delimiter=',', index_col=0, header=0))
+        df = pd.DataFrame()
+        for r in results:
+            df = pd.concat([df, r], axis=1, sort=False)
+
+        return df
+
     def structureFilesExist(self):
         expected_number_file = self.n_restart * self.n_points
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
-        path = os.path.join(self.result_dir, 'structures',
+        path = os.path.join(self.result_dir, 'raw/structures',
                             self.method, parameters + '_' + self.result_domain_str)
         if os.path.exists(path):
             list_file = os.listdir(path)
@@ -281,9 +298,9 @@ class Pipeline:
             return False
     
     def computeStructuralScore(self, score):
-        Path(os.path.join(self.result_dir, 'scores')).mkdir(parents=True, exist_ok=True)
+        Path(os.path.join(self.result_dir, 'processed')).mkdir(parents=True, exist_ok=True)
         
-        if self.structuralScoreExists(score):
+        if self.metricExists(score):
             return
         
         # Loading true structure
@@ -309,17 +326,52 @@ class Pipeline:
 
         
         # Writing results
-        header = "Size, Mean, Std"
+        header = "Size,Mean,Std"
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
         suffix = ''.join(['f', str(self.begin_size), 't', str(self.end_size),
                           'np', str(self.n_points), 'r', str(self.n_restart)])
         res_file_name = '_'.join([score, self.method, parameters, suffix])        
         res_file = res_file_name + '.csv'
         
-        print("Writing results in ", os.path.join(self.result_dir, "scores", res_file))
-        np.savetxt(os.path.join(self.result_dir, "scores", res_file),
-                       results, fmt="%f", delimiter=',', header=header)
+        print("Writing results in ", os.path.join(self.result_dir, "processed", res_file))
+        np.savetxt(os.path.join(self.result_dir, "processed", res_file),
+                   results, fmt="%f", delimiter=',', header=header)
+
+    def computeMeanTime(self):
+        Path(os.path.join(self.result_dir, 'processed')).mkdir(parents=True, exist_ok=True)
         
+        # if self.metricExists('time'):
+            # return
+        
+        # Learning structures on multiple dataset
+        # if self.timeFilesExist():
+            # df_times = self.loadLearningTimes()
+        # else:
+            # list_times = self.struct_from_multiple_dataset()
+
+        df_times = self.loadLearningTimes()
+            
+        sizes = np.array(df_times.index, dtype=int)
+        sizes = sizes.reshape((len(sizes), 1))
+
+        mean = np.array(df_times.mean(axis=1))
+        mean = mean.reshape((len(mean), 1))
+
+        std = np.array(df_times.std(axis=1))
+        std = std.reshape((len(std), 1))
+
+        results = np.concatenate((sizes, mean, std), axis=1)
+        
+        # Writing results
+        header = "Size,Mean,Std"
+        parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
+        res_file_name = '_'.join(['time', self.method, parameters, self.result_domain_str])        
+        res_file = res_file_name + '.csv'
+
+        print("Writing results in ", os.path.join(self.result_dir, "processed", res_file))
+        np.savetxt(os.path.join(self.result_dir, "processed", res_file),
+                       results, fmt="%f", delimiter=',', header=header)
+
     def learning(self, sample):
         if self.method == "cpc":
             learner = otagr.ContinuousPC(sample,
@@ -381,9 +433,9 @@ class Pipeline:
 
     def struct_from_multiple_dataset(self):
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
-        struct_path = os.path.join(self.result_dir, 'structures', self.method,
+        struct_path = os.path.join(self.result_dir, 'raw/structures', self.method,
                             parameters + '_' + self.result_domain_str)
-        time_path = os.path.join(self.result_dir, 'times', self.method,
+        time_path = os.path.join(self.result_dir, 'raw/times', self.method,
                             parameters + '_' + self.result_domain_str)
         Path(struct_path).mkdir(parents=True, exist_ok=True)
         Path(time_path).mkdir(parents=True, exist_ok=True)
@@ -440,16 +492,14 @@ class Pipeline:
         np.savetxt(file_name + '.csv', results, fmt="%f", delimiter=',', header=header, comments='')
 
     
-    def plotScore(self, score, fig, ax, error=False, **kwargs):
-        Path(os.path.join(self.figure_dir, 'scores')).mkdir(parents=True, exist_ok=True)
-
+    def plotMetric(self, metric, fig, ax, error=False, **kwargs):
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
         suffix = ''.join(['f', str(self.begin_size), 't', str(self.end_size),
                           'np', str(self.n_points), 'r', str(self.n_restart)])
-        res_file_name = '_'.join([score, self.method, parameters, suffix])        
+        res_file_name = '_'.join([metric, self.method, parameters, suffix])        
         res_file = res_file_name + '.csv'
         
-        res = np.loadtxt(os.path.join(self.result_dir, "scores", res_file), delimiter=',')
+        res = np.loadtxt(os.path.join(self.result_dir, "processed", res_file), delimiter=',')
         res = res.transpose()
         
         sizes = res[0].astype(int)
@@ -463,12 +513,11 @@ class Pipeline:
         ax.legend()
 
     def plotTime(self, fig, ax, error=False, **kwargs):
-        Path(os.path.join(self.figure_dir, 'times')).mkdir(parents=True, exist_ok=True)
-        times_dir = os.path.join(self.result_dir, "times", self.method)
-
         parameters = '_'.join([str(v).replace('.','') for v in self.parameters.values()])
         suffix = ''.join(['f', str(self.begin_size), 't', str(self.end_size),
                           'np', str(self.n_points), 'r', str(self.n_restart)])
+
+        times_dir = os.path.join(self.result_dir, "raw/times", self.method)
         times_dir = os.path.join(times_dir, '_'.join([parameters, suffix]))
         # print(times_dir)
         
