@@ -22,49 +22,25 @@ mpl.rcParams.update({'font.size': 22,
                      # 'legend.handlelength': 1.1,
                      'legend.labelspacing': 0.2})
 
-def get_domain(left, right):
-    if left%10!=0 or right%10!=0:
-        print("left and right must be multiples of 10!")
-    if left > right:
-        print("left must be less than right!")
 
-    a = 0
-    temp = left
-    while (temp%10) == 0:
-        temp = temp//10
-        a = a + 1
-
-    b = 0
-    temp = right
-    while (temp%10) == 0:
-        temp = temp/10
-        b = b + 1
-         
-    x = left
-    domain = [x]
-    while x < right:
-        while x < 10**(a+1) and x < right:
-            x = x + 10**a
-            domain.append(x)
-        a = a + 1
-    return domain
-
+# PARAMETERS
 distributions = ['gaussian', 'student', 'dirichlet']
 
 structures = os.listdir("../data/structures/generated")
 structures.sort()
 structures = [structure.split('.')[0] for structure in structures]
-# print(structures)
 
-size_min = {structure:100 for structure in structures}
+size_min = {structure:5000 for structure in structures}
 size_max = {structure:10000 for structure in structures}
-n_points = {structure:10 for structure in structures}
+n_points = {structure:2 for structure in structures}
 n_restart = {structure:5 for structure in structures}
 xlim = {structure:50 for structure in structures}
 ylim = {structure:50 for structure in structures}
 
 correlations = np.round(np.linspace(0.8, 0.8, 1), decimals=1)
 
+
+# INITIALIZATION OF PIPELINES
 cmiic_gaussian = Pipeline('cmiic',
                           cmode=cmi.CModeTypes_Gaussian,
                           kmode=cmi.KModeTypes_Naive)
@@ -85,6 +61,9 @@ cbic_gaussian.setStructurePrefix("data/structures/generated/")
 
 dmiic = Pipeline('dmiic', dis_method='quantile', nbins=5, threshold=25)
 dmiic.setStructurePrefix("data/structures/generated/")
+
+gbn = Pipeline('gbn', maxp=4, restart=5)
+gbn.setStructurePrefix("data/structures/generated/")
 
 plot_style_bernstein = {'linewidth':2.,
                         'linestyle':'-',
@@ -111,6 +90,11 @@ plot_style_dmiic = {'linewidth':2.,
                             'color':'red',
                             'label':'d-miic'}
 
+plot_style_gbn = {'linewidth':2.,
+                  'linestyle':'-.',
+                  'color':'green',
+                  'label':'gbn'}
+
 for structure in structures:
     print('Structure :', structure)
     cmiic_gaussian.setDataStructure(structure)
@@ -118,6 +102,7 @@ for structure in structures:
     cpc.setDataStructure(structure)
     cbic_gaussian.setDataStructure(structure)
     dmiic.setDataStructure(structure)
+    gbn.setDataStructure(structure)
     
     cmiic_gaussian.setResultDomain(size_min[structure],
                                    size_max[structure],
@@ -142,6 +127,11 @@ for structure in structures:
                                   n_points[structure],
                                   n_restart[structure])
 
+    gbn.setResultDomain(size_min[structure],
+                          size_max[structure],
+                          n_points[structure],
+                          n_restart[structure])
+
     for distribution in distributions:
         print('Distribution :', distribution)
         if distribution == 'gaussian' or distribution == 'student':
@@ -149,6 +139,7 @@ for structure in structures:
                 print('Correlation :', correlation)
                 apath = os.path.join('../figures/',
                                      distribution,
+                                     'generated/',
                                      structure,
                                      'r'+str(correlation).replace('.', ''))
                 Path(apath).mkdir(parents=True, exist_ok=True)
@@ -157,43 +148,58 @@ for structure in structures:
                 cpc.setDataDistribution(distribution, r=correlation)
                 cbic_gaussian.setDataDistribution(distribution, r=correlation)
                 dmiic.setDataDistribution(distribution, r=correlation)
+                gbn.setDataDistribution(distribution, r=correlation)
                 
                 cmiic_gaussian.generate_data()
                 cmiic_bernstein.generate_data()
                 cpc.generate_data()
                 cbic_gaussian.generate_data()
                 dmiic.generate_data()
+                gbn.generate_data()
                 
                 print('cmiic gaussian', flush=True)
                 cmiic_gaussian.computeStructuralScore('skelF')
                 cmiic_gaussian.computeStructuralScore('hamming')
+                cmiic_gaussian.computeMeanTime()
                 
                 print('cmiic bernstein', flush=True)
                 cmiic_bernstein.computeStructuralScore('skelF')
                 cmiic_bernstein.computeStructuralScore('hamming')
+                cmiic_bernstein.computeMeanTime()
                 
                 print('cpc', flush=True)
                 cpc.computeStructuralScore('skelF')
                 cpc.computeStructuralScore('hamming')
+                cpc.computeMeanTime()
 
                 print('cbic gaussian', flush=True)
                 cbic_gaussian.computeStructuralScore('skelF')
                 cbic_gaussian.computeStructuralScore('hamming')
+                cbic_gaussian.computeMeanTime()
 
                 print('dmiic', flush=True)
                 dmiic.computeStructuralScore('skelF')
                 dmiic.computeStructuralScore('hamming')
+                dmiic.computeMeanTime()
+
+                print('gbn', flush=True)
+                gbn.computeStructuralScore('skelF')
+                gbn.computeStructuralScore('hamming')
+                gbn.computeMeanTime()
 
                 fig, ax = plt.subplots()
                 ax.set_xlabel('')
                 ax.set_ylabel('')
                 ax.set_xlim([size_min[structure], xlim[structure]])
                 ax.set_ylim(0,1)
-                cmiic_bernstein.plotScore('skelF', fig, ax, **plot_style_bernstein)
-                cmiic_gaussian.plotScore('skelF', fig, ax, **plot_style_gaussian)
-                cpc.plotScore('skelF', fig, ax, **plot_style_cpc)
-                cbic_gaussian.plotScore('skelF', fig, ax, **plot_style_cbic_gaussian)
-                dmiic.plotScore('skelF', fig, ax, **plot_style_dmiic)
+
+                cmiic_bernstein.plotMetric('skelF', fig, ax, **plot_style_bernstein)
+                cmiic_gaussian.plotMetric('skelF', fig, ax, **plot_style_gaussian)
+                cpc.plotMetric('skelF', fig, ax, **plot_style_cpc)
+                cbic_gaussian.plotMetric('skelF', fig, ax, **plot_style_cbic_gaussian)
+                dmiic.plotMetric('skelF', fig, ax, **plot_style_dmiic)
+                gbn.plotMetric('skelF', fig, ax, **plot_style_gbn)
+
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels, loc='lower right')
@@ -207,11 +213,14 @@ for structure in structures:
                 ax.set_ylabel('')
                 ax.set_xlim([size_min[structure], size_max[structure]])
                 ax.set_ylim(0,ylim[structure])
-                cmiic_bernstein.plotScore('hamming', fig, ax, **plot_style_bernstein)
-                cmiic_gaussian.plotScore('hamming', fig, ax, **plot_style_gaussian)
-                cpc.plotScore('hamming', fig, ax, **plot_style_cpc)
-                cbic_gaussian.plotScore('hamming', fig, ax, **plot_style_cbic_gaussian)
-                dmiic.plotScore('hamming', fig, ax, **plot_style_dmiic)
+
+                cmiic_bernstein.plotMetric('hamming', fig, ax, **plot_style_bernstein)
+                cmiic_gaussian.plotMetric('hamming', fig, ax, **plot_style_gaussian)
+                cpc.plotMetric('hamming', fig, ax, **plot_style_cpc)
+                cbic_gaussian.plotMetric('hamming', fig, ax, **plot_style_cbic_gaussian)
+                dmiic.plotMetric('hamming', fig, ax, **plot_style_dmiic)
+                gbn.plotMetric('hamming', fig, ax, **plot_style_gbn)
+
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels, loc='upper right')
@@ -223,11 +232,14 @@ for structure in structures:
                 ax.set_xlabel('')
                 ax.set_ylabel('')
                 ax.set_xlim([size_min[structure], size_max[structure]])
-                cmiic_bernstein.plotTime(fig, ax, **plot_style_bernstein)
-                cmiic_gaussian.plotTime(fig, ax, **plot_style_gaussian)
-                cpc.plotTime(fig, ax, **plot_style_cpc)
-                cbic_gaussian.plotTime(fig, ax, **plot_style_cbic_gaussian)
-                dmiic.plotTime(fig, ax, **plot_style_dmiic)
+
+                cmiic_bernstein.plotMetric('time', fig, ax, **plot_style_bernstein)
+                cmiic_gaussian.plotMetric('time', fig, ax, **plot_style_gaussian)
+                cpc.plotMetric('time', fig, ax, **plot_style_cpc)
+                cbic_gaussian.plotMetric('time', fig, ax, **plot_style_cbic_gaussian)
+                dmiic.plotMetric('time', fig, ax, **plot_style_dmiic)
+                gbn.plotMetric('time', fig, ax, **plot_style_gbn)
+
                 handles, labels = ax.get_legend_handles_labels()
                 handles = [h[0] for h in handles]
                 ax.legend(handles, labels)
@@ -237,50 +249,65 @@ for structure in structures:
                 
                 
         elif distribution == 'dirichlet':
-            bpath = os.path.join('../figures/', distribution, structure)
+            bpath = os.path.join('../figures/', distribution, 'generated', structure)
             Path(bpath).mkdir(parents=True, exist_ok=True)
             cmiic_gaussian.setDataDistribution(distribution)
             cmiic_bernstein.setDataDistribution(distribution)
             cpc.setDataDistribution(distribution)
             cbic_gaussian.setDataDistribution(distribution)
             dmiic.setDataDistribution(distribution)
+            gbn.setDataDistribution(distribution)
             
             cmiic_gaussian.generate_data()
             cmiic_bernstein.generate_data()
             cpc.generate_data()
             cbic_gaussian.generate_data()
             dmiic.generate_data()
+            gbn.generate_data()
             
             print('cmiic gaussian')
             cmiic_gaussian.computeStructuralScore('skelF')
             cmiic_gaussian.computeStructuralScore('hamming')
+            cmiic_gaussian.computeMeanTime()
             
             print('cmiic bernstein')
             cmiic_bernstein.computeStructuralScore('skelF')
             cmiic_bernstein.computeStructuralScore('hamming')
+            cmiic_bernstein.computeMeanTime()
             
             print('cpc')
             cpc.computeStructuralScore('skelF')
             cpc.computeStructuralScore('hamming')
+            cpc.computeMeanTime()
 
             print('cbic gaussian')
             cbic_gaussian.computeStructuralScore('skelF')
             cbic_gaussian.computeStructuralScore('hamming')
+            cbic_gaussian.computeMeanTime()
 
             print('dmiic')
             dmiic.computeStructuralScore('skelF')
             dmiic.computeStructuralScore('hamming')
+            dmiic.computeMeanTime()
+
+            print('gbn')
+            gbn.computeStructuralScore('skelF')
+            gbn.computeStructuralScore('hamming')
+            gbn.computeMeanTime()
             
             fig, ax = plt.subplots()
             ax.set_xlabel('')
             ax.set_ylabel('')
             ax.set_xlim([size_min[structure], xlim[structure]])
             ax.set_ylim(0,1)
-            cmiic_bernstein.plotScore('skelF', fig, ax, **plot_style_bernstein)
-            cmiic_gaussian.plotScore('skelF', fig, ax, **plot_style_gaussian)
-            cpc.plotScore('skelF', fig, ax, **plot_style_cpc)
-            cbic_gaussian.plotScore('skelF', fig, ax, **plot_style_cbic_gaussian)
-            dmiic.plotScore('skelF', fig, ax, **plot_style_dmiic)
+
+            cmiic_bernstein.plotMetric('skelF', fig, ax, **plot_style_bernstein)
+            cmiic_gaussian.plotMetric('skelF', fig, ax, **plot_style_gaussian)
+            cpc.plotMetric('skelF', fig, ax, **plot_style_cpc)
+            cbic_gaussian.plotMetric('skelF', fig, ax, **plot_style_cbic_gaussian)
+            dmiic.plotMetric('skelF', fig, ax, **plot_style_dmiic)
+            gbn.plotMetric('skelF', fig, ax, **plot_style_gbn)
+
             handles, labels = ax.get_legend_handles_labels()
             handles = [h[0] for h in handles]
             ax.legend(handles, labels, loc='lower right')
@@ -294,11 +321,14 @@ for structure in structures:
             ax.set_ylabel('')
             ax.set_xlim([size_min[structure], size_max[structure]])
             ax.set_ylim(0,ylim[structure])
-            cmiic_bernstein.plotScore('hamming', fig, ax, **plot_style_bernstein)
-            cmiic_gaussian.plotScore('hamming', fig, ax, **plot_style_gaussian)
-            cpc.plotScore('hamming', fig, ax, **plot_style_cpc)
-            cbic_gaussian.plotScore('hamming', fig, ax, **plot_style_cbic_gaussian)
-            dmiic.plotScore('hamming', fig, ax, **plot_style_dmiic)
+
+            cmiic_bernstein.plotMetric('hamming', fig, ax, **plot_style_bernstein)
+            cmiic_gaussian.plotMetric('hamming', fig, ax, **plot_style_gaussian)
+            cpc.plotMetric('hamming', fig, ax, **plot_style_cpc)
+            cbic_gaussian.plotMetric('hamming', fig, ax, **plot_style_cbic_gaussian)
+            dmiic.plotMetric('hamming', fig, ax, **plot_style_dmiic)
+            gbn.plotMetric('hamming', fig, ax, **plot_style_gbn)
+
             handles, labels = ax.get_legend_handles_labels()
             handles = [h[0] for h in handles]
             ax.legend(handles, labels, loc='upper right')
@@ -314,12 +344,13 @@ for structure in structures:
             ax.set_xlabel('')
             ax.set_ylabel('')
             ax.set_xlim([size_min[structure], size_max[structure]])
-            # ax.set_ylim(0,yim[structure])
-            cmiic_bernstein.plotTime(fig, ax, **plot_style_bernstein)
-            cmiic_gaussian.plotTime(fig, ax, **plot_style_gaussian)
-            cpc.plotTime(fig, ax, **plot_style_cpc)
-            cbic_gaussian.plotTime(fig, ax, **plot_style_cbic_gaussian)
-            dmiic.plotTime(fig, ax, **plot_style_dmiic)
+
+            cmiic_bernstein.plotMetric('time', fig, ax, **plot_style_bernstein)
+            cmiic_gaussian.plotMetric('time', fig, ax, **plot_style_gaussian)
+            cpc.plotMetric('time', fig, ax, **plot_style_cpc)
+            cbic_gaussian.plotMetric('time', fig, ax, **plot_style_cbic_gaussian)
+            dmiic.plotMetric('time', fig, ax, **plot_style_dmiic)
+            gbn.plotMetric('time', fig, ax, **plot_style_gbn)
 
             handles, labels = ax.get_legend_handles_labels()
             handles = [h[0] for h in handles]
