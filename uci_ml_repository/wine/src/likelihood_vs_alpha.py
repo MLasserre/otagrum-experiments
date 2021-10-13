@@ -8,6 +8,7 @@ import otagrum as otagr
 
 from pathlib import Path
 import numpy as np
+from sklearn.model_selection import KFold
 
 import graphviz
 import pydotplus
@@ -87,6 +88,7 @@ file_name = 'winequality-red.csv'
 
 # Loading data
 data_ref = ot.Sample.ImportFromTextFile(str(data_path.joinpath(file_name)), ";")
+kf = KFold(n_splits=10)
 size = data_ref.getSize()     # Size of data
 dim = data_ref.getDimension() # Dimension of data
 
@@ -95,62 +97,75 @@ dim = data_ref.getDimension() # Dimension of data
 alphas = np.arange(10, 501, 5)/1000
 # alphas = [0.4]
 
-
-n_arcs = []
-likelihoods = []
-for alpha in alphas:
-    print("Processing alpha={}".format(alpha))
-    learner = otagr.ContinuousMIIC(data_ref) # Using CMIIC algorithm
-    learner.setAlpha(alpha)
-    cmiic_dag = learner.learnDAG() # Learning DAG
-    n_arc = cmiic_dag.getDAG().sizeArcs()
-    n_arcs.append(n_arc)
-    write_graph(cmiic_dag,
-                structure_path.joinpath("cmiic_dag_"+str(alpha).replace('.','')+'.dot'))
-    cmiic_cbn = otagr.ContinuousBayesianNetworkFactory(ot.KernelSmoothing(ot.Epanechnikov()),
-                                                       ot.BernsteinCopulaFactory(),
-                                                       cmiic_dag,
-                                                       0.05,
-                                                       4,
-                                                       False).build(data_ref)
-    # sampled = cmiic_cbn.getSample(1000)
-    # sampled = (sampled.rank() +1)/(sampled.getSize()+2)
-    # pairs(sampled, figure_path.joinpath('pairs_test.pdf')
-    ll = 0
-    s = 0
-    for point in data_ref:
-        point_ll = cmiic_cbn.computeLogPDF(point)
-        if np.abs(point_ll) <= 10e20:
-            s+=1
-            ll += point_ll
-    ll /= s
-    # ll = cmiic_cbn.computeLogPDF(data_ref).computeMean()[0]
-    print("\tNumber of arcs in the learned graph: {}".format(n_arc))
-    print("\tLikelihood: {}".format(ll))
-    likelihoods.append(ll)
+ot.ResourceMap.SetAsUnsignedInteger("ContinuousBayesianNetworkFactory-MaximumDiscreteSupport", 0) 
 
 
-fig, ax = plt.subplots()
+likelihood_curves = []
+bic_curves = []
+for (i, (train, test)) in enumerate(kf.split(data_ref)):
+    print("Learning with fold number {}".format(i))
+    likelihood_curve = []
+    bic_curve = []
+    for alpha in alphas:
+        print("\tLearning with alpha={}".format(alpha))
+        learner = otagr.ContinuousMIIC(data_ref.select(train)) # Using CMIIC algorithm
+        learner.setAlpha(alpha)
+        cmiic_dag = learner.learnDAG() # Learning DAG
+        cmiic_cbn = otagr.ContinuousBayesianNetworkFactory(ot.KernelSmoothing(ot.Epanechnikov()),
+                                                           ot.BernsteinCopulaFactory(),
+                                                           cmiic_dag,
+                                                           0.05,
+                                                           4,
+                                                           False).build(data_ref.select(train))
+        # sampled = cmiic_cbn.getSample(1000)
+        # sampled = (sampled.rank() +1)/(sampled.getSize()+2)
+        # pairs(sampled, figure_path.joinpath('pairs_test.pdf')
+        ll = 0
+        s = 0
+        for point in data_ref:
+            point_ll = cmiic_cbn.computeLogPDF(point)
+            if np.abs(point_ll) <= 10e20:
+                s+=1
+                ll += point_ll
+        ll /= s
+        n_arc = cmiic_dag.getDAG().sizeArcs()
+        # ll = cmiic_cbn.computeLogPDF(data_ref.select(test)).computeMean()[0]
+        bic = ll - 0.5 * np.log(data_ref.select(test).getSize()) * n_arc
+        print("\t\tLikelihood: {}".format(ll))
+        print("\t\tBIC: {}".format(bic))
+        likelihood_curve.append(ll)
+        bic_curve.append(bic)
+    likelihood_curves.append(likelihood_curve)
+    bic_curves.append(bic_curve)
 
-x_major_ticks = np.arange(0, 0.5, 0.05)
-x_minor_ticks = np.arange(0, 0.5, 0.01)
+print(likelihood_curves)
+likelihood_mean_curve = np.array(likelihood_curves).mean(axis=0)
+bic_mean_curve = np.array(bic_curves).mean(axis=0)
 
-y_major_ticks = np.arange(0, 25, 5)
-y_minor_ticks = np.arange(0, 25, 1)
-
-ax.set_xticks(x_major_ticks)
-ax.set_xticks(x_minor_ticks, minor=True)
-ax.set_yticks(y_major_ticks)
-ax.set_yticks(y_minor_ticks, minor=True)
-
-ax.set_xlim(0, 0.5)
-ax.set_ylim(0, 25)
-
-ax.plot(alphas, n_arcs)
-plt.savefig(figure_path.joinpath("alpha_curve.pdf"), transparent=True)
-print("Saving figure in {}".format(figure_path.joinpath("narc_vs_alpha.pdf")))
+likelihood_std_curve = np.array(likelihood_curves).std(axis=0)
+bic_std_curve = np.array(bic_curves).std(axis=0)
 
 fig, ax = plt.subplots()
-ax.plot(alphas, likelihoods)
+
+# x_major_ticks = np.arange(0, 0.5, 0.05)
+# x_minor_ticks = np.arange(0, 0.5, 0.01)
+
+# y_major_ticks = np.arange(0, 25, 5)
+# y_minor_ticks = np.arange(0, 25, 1)
+
+# ax.set_xticks(x_major_ticks)
+# ax.set_xticks(x_minor_ticks, minor=True)
+# ax.set_yticks(y_major_ticks)
+# ax.set_yticks(y_minor_ticks, minor=True)
+
+# ax.set_xlim(0, 0.5)
+# ax.set_ylim(0, 25)
+
+ax.errorbar(alphas, likelihood_mean_curve, yerr=likelihood_std_curve)
 plt.savefig(figure_path.joinpath("likelihood_vs_alpha.pdf"), transparent=True)
 print("Saving figure in {}".format(figure_path.joinpath("likelihood_vs_alpha.pdf")))
+
+fig, ax = plt.subplots()
+ax.errorbar(alphas, bic_mean_curve, yerr=bic_std_curve)
+plt.savefig(figure_path.joinpath("bic_vs_alpha.pdf"), transparent=True)
+print("Saving figure in {}".format(figure_path.joinpath("bic_vs_alpha.pdf")))
