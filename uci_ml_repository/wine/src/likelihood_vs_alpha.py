@@ -64,7 +64,7 @@ def pairs(data, filename):
     otv.View(pairs_data).save(filename.parent.joinpath(filename.stem+'_copula'+filename.suffix))
     print("Saving figure in {}".format(filename.parent.joinpath(filename.stem+'_copula'+filename.suffix)))
 
-
+np.random.seed(42)
 # SETTING DATA, RESULTS AND FIGURE PATHS 
 
 location = Path('..') 
@@ -102,7 +102,9 @@ ot.ResourceMap.SetAsUnsignedInteger("ContinuousBayesianNetworkFactory-MaximumDis
 
 likelihood_curves = []
 bic_curves = []
-for (i, (train, test)) in enumerate(kf.split(data_ref)):
+splits = kf.split(data_ref)
+# for (i, (train, test)) in enumerate(splits):
+for (i, (train, test)) in enumerate([list(splits)[3]]):
     print("Learning with fold number {}".format(i))
     likelihood_curve = []
     bic_curve = []
