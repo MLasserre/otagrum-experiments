@@ -85,6 +85,8 @@ figure_path.mkdir(parents=True, exist_ok=True)
 # Data file name
 file_name = 'winequality-red.csv'
 
+dataset_name = file_name.split('.')[0]
+
 # Loading data
 data_ref = ot.Sample.ImportFromTextFile(str(data_path.joinpath(file_name)), ";")
 size = data_ref.getSize()     # Size of data
@@ -100,7 +102,7 @@ size_draw = min(size, size_draw)
 data_draw = data_ref[0:size_draw]  # Number of realizations taken in order to plot figures
 
 print("Processing reference data")
-f = figure_path.joinpath("pairs_ref.pdf")
+f = figure_path.joinpath("pairs_ref_" + dataset_name + ".pdf")
 pairs(data_draw, f)
 
 
@@ -111,13 +113,13 @@ pairs(data_draw, f)
 # CBIC Algorithm
 learner = otagr.TabuList(data_ref, 2, 10, 2) # Using CPC algorithm
 cbic_dag = learner.learnDAG() # Learning DAG
-write_graph(cbic_dag, structure_path.joinpath("cbic_dag.dot"))
+write_graph(cbic_dag, structure_path.joinpath("cbic_dag_" + dataset_name + ".dot"))
 
 
 # CPC Algorithm
 learner = otagr.ContinuousPC(data_ref, 4, 0.05) # Using CPC algorithm
 cpc_dag = learner.learnDAG() # Learning DAG
-write_graph(cpc_dag, structure_path.joinpath("cpc_dag.dot"))
+write_graph(cpc_dag, structure_path.joinpath("cpc_dag_" + dataset_name + ".dot"))
 
 
 # CMIIC ALGORITHM
@@ -147,12 +149,12 @@ for alpha in alphas:
     cmiic_dag = learner.learnDAG() # Learning DAG
     n_arcs.append(cmiic_dag.getDAG().sizeArcs())
     write_graph(cmiic_dag,
-                structure_path.joinpath("cmiic_dag_"+str(alpha).replace('.','')+'.dot'))
+                structure_path.joinpath("cmiic_dag_"+str(alpha).replace('.','') + '_' + dataset_name + '.dot'))
 
 plt.plot(alphas, n_arcs)
 # ax.legend()
-plt.savefig(figure_path.joinpath("alpha_curve.pdf"), transparent=True)
-print("Saving figure in {}".format(figure_path.joinpath("alpha_curve.pdf")))
+plt.savefig(figure_path.joinpath("alpha_curve_" + dataset_name + ".pdf"), transparent=True)
+print("Saving figure in {}".format(figure_path.joinpath("alpha_curve_" + dataset_name + ".pdf")))
 
 '''
 #################LEARNING PARAMETERS########################
