@@ -1,0 +1,7 @@
+digraph {
+    node [style=filled, fillcolor="#E9E9E9", penwidth=1.875, fontsize=14, fontname="times-bold"]
+    edge [penwidth=1.5]
+    "quality"->"alcohol"
+    "alcohol"->"density"
+    "density"->"residual sugar"
+}

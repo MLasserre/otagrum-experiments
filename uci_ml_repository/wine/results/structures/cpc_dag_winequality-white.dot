@@ -1,0 +1,24 @@
+digraph {
+    node [style=filled, fillcolor="#E9E9E9", penwidth=1.875, fontsize=14, fontname="times-bold"]
+    edge [penwidth=1.5]
+    "alcohol"->"quality"
+    "alcohol"->"volatile acidity"
+    "alcohol"->"density"
+    "alcohol"->"chlorides"
+    "total sulfur dioxide"->"sulphates"
+    "total sulfur dioxide"->"density"
+    "total sulfur dioxide"->"chlorides"
+    "total sulfur dioxide"->"free sulfur dioxide"
+    "chlorides"->"quality"
+    "sulphates"->"pH"
+    "fixed acidity"->"pH"
+    "fixed acidity"->"density"
+    "fixed acidity"->"citric acid"
+    "citric acid"->"quality"
+    "citric acid"->"volatile acidity"
+    "volatile acidity"->"residual sugar"
+    "volatile acidity"->"quality"
+    "quality"->"free sulfur dioxide"
+    "free sulfur dioxide"->"residual sugar"
+    "residual sugar"->"density"
+}
