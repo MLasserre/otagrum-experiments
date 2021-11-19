@@ -14,6 +14,8 @@ import graphviz
 import pydotplus
 import matplotlib.pyplot as plt
 
+import sys
+
 
 # DEFINING UTIL FUNCTIONS
 
@@ -88,51 +90,67 @@ file_name = 'winequality-red.csv'
 
 # Loading data
 data_ref = ot.Sample.ImportFromTextFile(str(data_path.joinpath(file_name)), ";")
-kf = KFold(n_splits=10)
+kf = KFold(n_splits=100)
 size = data_ref.getSize()     # Size of data
 dim = data_ref.getDimension() # Dimension of data
 
 # data_ref = (data_ref.rank() +1)/(size + 2)
 
-alphas = np.arange(10, 501, 5)/1000
+#alphas = np.arange(10, 501, 5)/1000
+alphas = np.arange(1e-2, 5e-1, 1e-2)
 # alphas = [0.4]
 
 ot.ResourceMap.SetAsUnsignedInteger("ContinuousBayesianNetworkFactory-MaximumDiscreteSupport", 0) 
-
+ot.ResourceMap.SetAsBool("ContinuousBayesianNetworkFactory-UseBetaCopula", sys.argv[1] == "beta")
+suffix = sys.argv[1]
+print("suffix=", suffix)
 
 likelihood_curves = []
 bic_curves = []
 splits = kf.split(data_ref)
 # for (i, (train, test)) in enumerate(splits):
-for (i, (train, test)) in enumerate([list(splits)[3]]):
+for (i, (train, test)) in enumerate(list(splits)):
     print("Learning with fold number {}".format(i))
     likelihood_curve = []
     bic_curve = []
     for alpha in alphas:
+        ot.Log.Show(ot.Log.NONE)
         print("\tLearning with alpha={}".format(alpha))
         learner = otagr.ContinuousMIIC(data_ref.select(train)) # Using CMIIC algorithm
         learner.setAlpha(alpha)
         cmiic_dag = learner.learnDAG() # Learning DAG
-        cmiic_cbn = otagr.ContinuousBayesianNetworkFactory(ot.KernelSmoothing(ot.Epanechnikov()),
-                                                           ot.BernsteinCopulaFactory(),
-                                                           cmiic_dag,
-                                                           0.05,
-                                                           4,
-                                                           False).build(data_ref.select(train))
+        ot.Log.Show(ot.Log.NONE)
+        if True:
+            cmiic_cbn = otagr.ContinuousBayesianNetworkFactory(ot.KernelSmoothing(ot.Normal()),
+                                                               ot.BernsteinCopulaFactory(),
+                                                               cmiic_dag,
+                                                               0.05,
+                                                               4,
+                                                               False).build(data_ref.select(train))
+        else:
+            cmiic_cbn = otagr.ContinuousBayesianNetworkFactory(ot.NormalFactory(),
+                                                               ot.NormalCopulaFactory(),
+                                                               cmiic_dag,
+                                                               0.05,
+                                                               4,
+                                                               False).build(data_ref.select(train))
         # sampled = cmiic_cbn.getSample(1000)
         # sampled = (sampled.rank() +1)/(sampled.getSize()+2)
         # pairs(sampled, figure_path.joinpath('pairs_test.pdf')
         ll = 0
         s = 0
-        for point in data_ref:
+        for point in data_ref.select(test):
             point_ll = cmiic_cbn.computeLogPDF(point)
             if np.abs(point_ll) <= 10e20:
                 s+=1
                 ll += point_ll
+            else:
+                print("pb point=", point, "log pdf=", point_ll)
         ll /= s
         n_arc = cmiic_dag.getDAG().sizeArcs()
         # ll = cmiic_cbn.computeLogPDF(data_ref.select(test)).computeMean()[0]
-        bic = ll - 0.5 * np.log(data_ref.select(test).getSize()) * n_arc
+        #bic = ll - 0.5 * np.log(data_ref.select(test).getSize()) * n_arc
+        bic = s*ll - 0.5 * np.log(s) * n_arc / s
         print("\t\tLikelihood: {}".format(ll))
         print("\t\tBIC: {}".format(bic))
         likelihood_curve.append(ll)
@@ -164,10 +182,10 @@ fig, ax = plt.subplots()
 # ax.set_ylim(0, 25)
 
 ax.errorbar(alphas, likelihood_mean_curve, yerr=likelihood_std_curve)
-plt.savefig(figure_path.joinpath("likelihood_vs_alpha.pdf"), transparent=True)
-print("Saving figure in {}".format(figure_path.joinpath("likelihood_vs_alpha.pdf")))
+plt.savefig(figure_path.joinpath("likelihood_vs_alpha_" + suffix + ".pdf"), transparent=True)
+print("Saving figure in {}".format(figure_path.joinpath("likelihood_vs_alpha_" + suffix + ".pdf")))
 
 fig, ax = plt.subplots()
 ax.errorbar(alphas, bic_mean_curve, yerr=bic_std_curve)
-plt.savefig(figure_path.joinpath("bic_vs_alpha.pdf"), transparent=True)
-print("Saving figure in {}".format(figure_path.joinpath("bic_vs_alpha.pdf")))
+plt.savefig(figure_path.joinpath("bic_vs_alpha_" + suffix + ".pdf"), transparent=True)
+print("Saving figure in {}".format(figure_path.joinpath("bic_vs_alpha_" + suffix + ".pdf")))
