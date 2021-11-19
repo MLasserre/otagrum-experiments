@@ -83,7 +83,7 @@ figure_path.mkdir(parents=True, exist_ok=True)
 # LOADING DATA
 
 # Data file name
-file_name = 'winequality-red.csv'
+file_name = 'winequality-white.csv'
 
 dataset_name = file_name.split('.')[0]
 
@@ -125,6 +125,7 @@ write_graph(cpc_dag, structure_path.joinpath("cpc_dag_" + dataset_name + ".dot")
 # CMIIC ALGORITHM
 
 alphas = np.arange(10, 501, 5)/1000
+# alphas = [0.04, 0.05]
 fig, ax = plt.subplots()
 
 x_major_ticks = np.arange(0, 0.5, 0.05)

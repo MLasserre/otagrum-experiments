@@ -51,8 +51,7 @@ def param_to_string(parameters):
     return '_'.join([str(parameter).replace('.', '') for parameter in parameters.values()])
 
 # sizes = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 62, 72, 82, 92, 102]
-sizes = [2, 7, 12]
-# sizes = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52]
+sizes = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 62, 72, 82, 92]
 # distributions = ["dirichlet"]
 distribution = 'gaussian'
 methods = {'cpc':{'binNumber':5, 'alpha':0.05},
